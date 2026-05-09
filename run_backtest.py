@@ -53,8 +53,8 @@ def main():
     print("(This may take a minute...)\n")
     try:
         data = pipeline.build_enriched_dataset(
-            h1_count=5000,   # 5000 hourly bars
-            d_count=2000     # 2000 daily bars
+            h1_count=5000,   # hourly bars
+            d_count=5000//24 # daily bars
         )
         print("✓ Data ready for backtesting\n")
     except Exception as e:
@@ -75,11 +75,16 @@ def main():
     print("Step 5: Running Backtest...")
     print("-" * 70 + "\n")
     try:
+        data['Open'] = data['open']
+        data['High'] = data['high']
+        data['Low'] = data['low']
+        data['Close'] = data['close']
         bt = Backtest(
             data,
             GBPJPY_SMA_Strategy,
             cash=1_000_000,        # $1M initial capital
-            commission=pipeline.slippage
+            commission=pipeline.slippage,
+            finalize_trades=True
         )
         stats = bt.run()
         print("✓ Backtest completed\n")
