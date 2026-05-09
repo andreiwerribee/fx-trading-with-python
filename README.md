@@ -22,6 +22,7 @@ This is a trend-following SMA-based strategy with:
 
 ### 1. Install Python Dependencies
 ```bash
+# works well with python 3.13.13
 pip install -r requirements.txt
 ```
 
