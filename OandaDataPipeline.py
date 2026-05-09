@@ -12,6 +12,7 @@ import pandas as pd
 import pandas_ta as ta
 from datetime import datetime, timedelta
 from typing import Optional
+import traceback
 
 try:
     from oandapyV20 import API
@@ -141,6 +142,13 @@ class OandaDataPipeline:
         
         # Bollinger Bands
         bb = ta.bbands(h1['close'], length=20, std=2)
+        bb.rename(columns={
+            'BBL_20_2.0_2.0': 'BBL_20_2.0',
+            'BBM_20_2.0_2.0': 'BBM_20_2.0',
+            'BBU_20_2.0_2.0': 'BBU_20_2.0',
+            'BBB_20_2.0_2.0': 'BBB_20_2.0',
+            'BBP_20_2.0_2.0': 'BBP_20_2.0'
+            }, inplace=True)
         if bb is not None:
             h1['bb_lower'] = bb['BBL_20_2.0']
             h1['bb_middle'] = bb['BBM_20_2.0']
@@ -167,12 +175,12 @@ class OandaDataPipeline:
         
         # ================== Merge Daily Trend to Hourly ==================
         print("Aligning daily trend with hourly bars...")
-        
+
         # Merge on the date (not time) to align all hourly bars with their daily trend
         h1['date'] = h1.index.date
         daily['date'] = daily.index.date
         
-        h1 = h1.merge(daily[['daily_trend']], left_on='date', right_on='date', how='left')
+        h1 = h1.merge(daily[['daily_trend', 'date']], left_on='date', right_on='date', how='left')
         h1.drop('date', axis=1, inplace=True)
         h1.set_index(h1.index, inplace=True)
         
@@ -200,6 +208,7 @@ class OandaDataPipeline:
         print(f"Date range: {df.index[0]} to {df.index[-1]}")
         print(f"Price range: {df['close'].min():.4f} - {df['close'].max():.4f}")
         print(f"Average volume: {df['volume'].mean():.0f}")
+        print(f"Columns: {list(df.columns)}")
         
         trend_counts = df['daily_trend'].value_counts()
         print(f"Trend distribution: {dict(trend_counts)}")
@@ -254,7 +263,7 @@ if __name__ == "__main__":
         pipeline = OandaDataPipeline(ACCESS_TOKEN, instrument="GBP_JPY")
         
         # Build enriched dataset
-        data = pipeline.build_enriched_dataset(h1_count=5000, d_count=5000)
+        data = pipeline.build_enriched_dataset(h1_count=5000, d_count=5000//24)
         
         # Print summary
         pipeline.get_data_summary(data)
